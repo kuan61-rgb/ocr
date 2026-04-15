@@ -117,8 +117,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  if (msg?.type === 'TRANSLATE_WORD') {
-    handleTranslateAndSave(msg.word)
+  if (msg?.type === 'TRANSLATE_WORD' || msg?.type === 'TRANSLATE_TEXT') {
+    handleTranslateAndSave(msg.word ?? msg.text)
       .then((entry) => sendResponse({ ok: true, entry }))
       .catch((err) => sendResponse({ ok: false, error: err?.message || String(err) }));
     return true;
@@ -153,39 +153,92 @@ async function pingGemini(apiKey, model) {
 }
 
 // ---------- Gemini 翻譯 + 儲存 ----------
-async function handleTranslateAndSave(rawWord) {
-  const word = (rawWord || '').trim();
-  if (!word) throw new Error('未辨識到單字');
+function isSentence(text) {
+  // 2 個或以上英文單字就視為句子
+  const tokens = text.trim().split(/\s+/).filter(Boolean);
+  return tokens.length >= 2;
+}
+
+async function handleTranslateAndSave(rawText) {
+  const text = (rawText || '').trim();
+  if (!text) throw new Error('未辨識到文字');
 
   const { geminiApiKey, geminiModel } = await chrome.storage.local.get(['geminiApiKey', 'geminiModel']);
   if (!geminiApiKey) throw new Error('尚未設定 Gemini API Key,請至設定頁輸入');
 
-  const data = await callGemini(geminiApiKey, word, geminiModel);
-
-  // 寫入 storage
   const { words = [] } = await chrome.storage.local.get('words');
-  const lower = data.word.toLowerCase();
-  const existingIdx = words.findIndex((w) => w.word.toLowerCase() === lower);
 
   let entry;
-  if (existingIdx >= 0) {
-    entry = {
-      ...words[existingIdx],
-      ...data,
-      createdAt: Date.now()
-    };
-    words[existingIdx] = entry;
-  } else {
+  if (isSentence(text)) {
+    const data = await callGeminiSentence(geminiApiKey, text, geminiModel);
     entry = {
       id: crypto.randomUUID(),
-      ...data,
+      type: 'sentence',
+      word: data.original,
+      translation: data.translation,
       createdAt: Date.now(),
       pinned: false
     };
     words.push(entry);
+  } else {
+    const data = await callGemini(geminiApiKey, text, geminiModel);
+    const lower = data.word.toLowerCase();
+    const existingIdx = words.findIndex((w) => (w.type ?? 'word') === 'word' && w.word.toLowerCase() === lower);
+    if (existingIdx >= 0) {
+      entry = { ...words[existingIdx], ...data, type: 'word', createdAt: Date.now() };
+      words[existingIdx] = entry;
+    } else {
+      entry = {
+        id: crypto.randomUUID(),
+        type: 'word',
+        ...data,
+        createdAt: Date.now(),
+        pinned: false
+      };
+      words.push(entry);
+    }
   }
   await chrome.storage.local.set({ words });
   return entry;
+}
+
+async function callGeminiSentence(apiKey, text, model) {
+  const useModel = model || DEFAULT_GEMINI_MODEL;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${useModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const prompt = `You are a professional English-to-Traditional-Chinese translator. The following text was extracted via OCR and may contain minor recognition errors — silently correct obvious typos. Output ONLY a single JSON object (no markdown, no code fence, no extra text) with these exact fields:
+{
+  "original": "the cleaned English text",
+  "translation": "自然流暢的繁體中文翻譯"
+}
+
+Text: ${text}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3 }
+    })
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Gemini API 錯誤 ${res.status}: ${txt.slice(0, 300)}`);
+  }
+
+  const json = await res.json();
+  const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!raw) throw new Error('Gemini 回傳格式異常');
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Gemini 回傳的 JSON 無法解析');
+    return JSON.parse(match[0]);
+  }
 }
 
 async function callGemini(apiKey, word, model) {

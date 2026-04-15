@@ -31,22 +31,29 @@ function render(words) {
 }
 
 function buildCard(w) {
+  const isSentence = w.type === 'sentence';
   const card = document.createElement('article');
-  card.className = 'card' + (w.pinned ? ' pinned' : '');
+  card.className = 'card' + (w.pinned ? ' pinned' : '') + (isSentence ? ' sentence' : '');
 
   const header = document.createElement('div');
   header.className = 'card-header';
 
   const word = document.createElement('span');
-  word.className = 'word';
+  word.className = isSentence ? 'sentence-text' : 'word';
   word.textContent = w.word;
   header.appendChild(word);
 
-  if (w.partOfSpeech) {
+  if (!isSentence && w.partOfSpeech) {
     const pos = document.createElement('span');
     pos.className = 'pos';
     pos.textContent = w.partOfSpeech;
     header.appendChild(pos);
+  }
+  if (isSentence) {
+    const tag = document.createElement('span');
+    tag.className = 'pos';
+    tag.textContent = '句';
+    header.appendChild(tag);
   }
   card.appendChild(header);
 
@@ -90,7 +97,7 @@ function buildCard(w) {
   delBtn.className = 'icon-btn';
   delBtn.title = '刪除';
   delBtn.textContent = '🗑️';
-  delBtn.addEventListener('click', () => deleteWord(w.id, w.word));
+  delBtn.addEventListener('click', () => deleteWord(w.id, isSentence ? (w.word.slice(0, 30) + (w.word.length > 30 ? '…' : '')) : w.word));
   actions.appendChild(delBtn);
 
   card.appendChild(actions);

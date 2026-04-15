@@ -27,7 +27,7 @@
 
     hintEl = document.createElement('div');
     hintEl.className = 'ocr-hint';
-    hintEl.textContent = '拖曳框選英文單字 — 按 Esc 取消';
+    hintEl.textContent = '拖曳框選英文單字或句子 — 按 Esc 取消';
 
     document.documentElement.appendChild(overlayEl);
     document.documentElement.appendChild(hintEl);
@@ -106,13 +106,14 @@
     try {
       const dataUrl = await captureVisibleTab();
       const croppedDataUrl = await cropImage(dataUrl, rect);
-      const word = await runOcr(croppedDataUrl);
-      if (!word) {
-        updateBubble(bubble, { error: '未辨識到任何單字' });
+      const text = await runOcr(croppedDataUrl);
+      if (!text) {
+        updateBubble(bubble, { error: '未辨識到任何文字' });
         return;
       }
-      updateBubble(bubble, { loadingText: `辨識結果: ${word} — 翻譯中…` });
-      const entry = await translateWord(word);
+      const preview = text.length > 40 ? text.slice(0, 40) + '…' : text;
+      updateBubble(bubble, { loadingText: `辨識結果: ${preview} — 翻譯中…` });
+      const entry = await translateText(text);
       updateBubble(bubble, { entry });
     } catch (err) {
       console.error('[OCR] 失敗:', err);
@@ -131,9 +132,9 @@
     });
   }
 
-  function translateWord(word) {
+  function translateText(text) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ type: 'TRANSLATE_WORD', word }, (res) => {
+      chrome.runtime.sendMessage({ type: 'TRANSLATE_TEXT', text }, (res) => {
         if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
         if (!res?.ok) return reject(new Error(res?.error || '翻譯失敗'));
         resolve(res.entry);
@@ -223,15 +224,19 @@
       return;
     }
     if (entry) {
+      const isSentence = entry.type === 'sentence';
+
       const w = document.createElement('div');
-      w.className = 'ocr-bubble-word';
+      w.className = isSentence ? 'ocr-bubble-sentence' : 'ocr-bubble-word';
       w.textContent = entry.word;
       bubble.appendChild(w);
 
-      const p = document.createElement('div');
-      p.className = 'ocr-bubble-pos';
-      p.textContent = entry.partOfSpeech || '';
-      bubble.appendChild(p);
+      if (!isSentence && entry.partOfSpeech) {
+        const p = document.createElement('div');
+        p.className = 'ocr-bubble-pos';
+        p.textContent = entry.partOfSpeech;
+        bubble.appendChild(p);
+      }
 
       const t = document.createElement('div');
       t.className = 'ocr-bubble-trans';
@@ -240,11 +245,11 @@
 
       const s = document.createElement('div');
       s.className = 'ocr-bubble-status';
-      s.textContent = '✓ 已加入單字列表';
+      s.textContent = isSentence ? '✓ 已加入列表（句子）' : '✓ 已加入單字列表';
       bubble.appendChild(s);
 
-      // 5 秒後自動關閉
-      setTimeout(() => bubble.remove(), 6000);
+      const hideDelay = isSentence ? 12000 : 6000;
+      setTimeout(() => bubble.remove(), hideDelay);
     }
   }
 })();

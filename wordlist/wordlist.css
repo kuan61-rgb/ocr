@@ -136,6 +136,23 @@ main {
   color: #f59e0b;
 }
 
+.card.sentence {
+  grid-column: span 2;
+  border-left: 4px solid #60a5fa;
+}
+
+.sentence-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .card.sentence { grid-column: span 1; }
+}
+
 .empty {
   text-align: center;
   padding: 80px 20px;
