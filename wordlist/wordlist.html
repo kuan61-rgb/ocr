@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>我的單字列表</title>
+  <link rel="stylesheet" href="wordlist.css" />
+</head>
+<body>
+  <header>
+    <h1>📚 我的單字列表</h1>
+    <div class="meta">
+      共 <span id="count">0</span> 個單字
+    </div>
+  </header>
+
+  <main>
+    <div id="empty" class="empty" hidden>
+      <p>還沒有任何單字。</p>
+      <p class="hint">在任意網頁按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> 框選英文單字即可建立卡片。</p>
+    </div>
+    <div id="grid" class="grid"></div>
+  </main>
+
+  <script src="wordlist.js"></script>
+</body>
+</html>

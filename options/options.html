@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>OCR 單字工具 — 設定</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <h1>設定</h1>
+
+    <section>
+      <label for="api-key">Google Gemini API Key</label>
+      <input id="api-key" type="password" placeholder="貼上你的 Gemini API Key" autocomplete="off" />
+      <p class="hint">
+        前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>
+        申請免費 API Key。Key 只會儲存在你瀏覽器的本地空間。
+      </p>
+
+      <label for="model" style="margin-top:16px;">Gemini 模型</label>
+      <select id="model">
+        <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (免費額度最寬鬆,推薦)</option>
+        <option value="gemini-2.5-flash">gemini-2.5-flash (品質較好)</option>
+        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+        <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+      </select>
+      <p class="hint">遇到 429 配額錯誤時可換成 lite 版本。</p>
+
+      <div class="actions">
+        <button id="save" class="btn primary">儲存</button>
+        <button id="test" class="btn">測試連線</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

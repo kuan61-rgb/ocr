@@ -1,0 +1,108 @@
+/* OCR overlay styles — 全部用 ocr-* 前綴避免衝突 */
+
+.ocr-root,
+.ocr-root * {
+  box-sizing: border-box;
+}
+
+.ocr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  cursor: crosshair;
+  background: rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+.ocr-selection {
+  position: fixed;
+  border: 2px dashed #4ade80;
+  background: rgba(74, 222, 128, 0.15);
+  pointer-events: none;
+  z-index: 2147483647;
+}
+
+.ocr-hint {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+    "Microsoft JhengHei", sans-serif;
+  z-index: 2147483647;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ocr-bubble {
+  position: fixed;
+  z-index: 2147483647;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  padding: 14px 18px;
+  min-width: 220px;
+  max-width: 360px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+    "Microsoft JhengHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ocr-bubble .ocr-bubble-word {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.ocr-bubble .ocr-bubble-pos {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.ocr-bubble .ocr-bubble-trans {
+  font-size: 15px;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.ocr-bubble .ocr-bubble-status {
+  font-size: 12px;
+  color: #10b981;
+}
+
+.ocr-bubble .ocr-bubble-error {
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.ocr-bubble .ocr-bubble-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.ocr-bubble .ocr-bubble-close:hover {
+  color: #111827;
+}
+
+.ocr-bubble.ocr-loading {
+  font-style: italic;
+  color: #6b7280;
+}
