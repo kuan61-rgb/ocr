@@ -107,6 +107,7 @@
       const dataUrl = await captureVisibleTab();
       const croppedDataUrl = await cropImage(dataUrl, rect);
       const text = await runOcr(croppedDataUrl);
+      console.log('[OCR] 辨識結果:', JSON.stringify(text));
       if (!text) {
         updateBubble(bubble, { error: '未辨識到任何文字' });
         return;
@@ -154,7 +155,7 @@
         const sh = rect.h * dpr;
 
         const canvas = document.createElement('canvas');
-        const scale = 2; // 放大提升辨識率
+        const scale = 3; // 放大提升辨識率
         canvas.width = sw * scale;
         canvas.height = sh * scale;
         const ctx = canvas.getContext('2d');
